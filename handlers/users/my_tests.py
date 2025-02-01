@@ -279,10 +279,10 @@ async def send_test_participation_html(query: types.CallbackQuery):
         correcto = participant.get("correct_answer", "")
         wrongo = participant.get("wrong_answer", "")
         user_time = format_test_time(participant.get("participated_at", 0))
-        total_questions = participant.get("answers", "")
+        total_questions1 = participant.get("answers", "")
 
-        if len(total_questions) > 0:
-            performance = round((int(correcto) / len(total_questions)) * 100, 2)
+        if len(total_questions1) > 0:
+            performance = round((int(correcto) / len(total_questions1)) * 100, 2)
         else:
             performance = 0
 
