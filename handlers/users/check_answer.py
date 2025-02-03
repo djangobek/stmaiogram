@@ -10,7 +10,7 @@ from states.mystate import *
 from aiogram.fsm.context import FSMContext
 from keyboards.default.buttons import *
 from aiogram.fsm.state import State, StatesGroup
-
+from data.config import ADMINS
 
 
 @dp.message(lambda message: message.text == "✅ Javobni tekshirish")
@@ -73,6 +73,18 @@ async def check_code(message: types.Message, state: FSMContext):
             await message.answer(f"❌ Xatolik yuz berdi: {str(e)}", reply_markup=main_menu_buttons())
     else:
         await message.answer("❌ Kod noto'g'ri. Iltimos, 4 xonali raqam yuboring.")
+
+
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+# Inline tugma yaratish
+def testni_tugatish_button(test_code):
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="✅ Testni tugatish", callback_data=f"finish_test_{test_code}")]
+        ]
+    )
+    return keyboard
 
 
 # Check the user's answers
@@ -153,9 +165,34 @@ async def check_answer(message: types.Message, state: FSMContext):
                 f"📈 To'g'ri ishlash ko'rsatkichi: {correctness_percentage:.2f}%\n\n"
                 f"📝 Test tuzuvchisi: {test['owner']['first_name']} {test['owner']['last_name']}\n"
             )
+            resulttoadmin = (
+                f"📂 Test kodi : {code}\n"
+                f"👤 Foydalanuvchi: {message.from_user.full_name}\n"
+                f"🔢 Savollar soni: {test['count']}\n"
+                f"✅ To'g'ri javoblar: {correct_count}\n"
+                f"❌ Noto'g'ri javoblar: {incorrect_count}\n"
+                f"📈 To'g'ri ishlash ko'rsatkichi: {correctness_percentage:.2f}%\n"
+            )
+            try:
+                    await bot.send_message(chat_id=test['owner']['telegram_id'], text=resulttoadmin, reply_markup=testni_tugatish_button(test_id))
+            except Exception as e:
+                    print(f"ownerga ga xabar yuborishda xatolik: {e}")
+
             await message.answer(result_message, reply_markup=main_menu_buttons())
             await message.answer("bosh menu", reply_markup=main_menu_buttons())
         else:
             await message.answer("❌ Test topilmadi. Kodni qayta tekshiring.")
     except Exception as e:
         await message.answer(f"❌ Xatolik yuz berdi: {str(e)}")
+
+
+@dp.callback_query(lambda c: c.data.startswith("finish_test_"))
+async def finish_test_callback(query: types.CallbackQuery):
+    test_code = query.data.split("_")[2]  # test kodini ajratib olish
+    response = update_test_status_api(test_code)  # Testni tugatish uchun API chaqirish
+
+    if response.get("success"):
+        await query.message.edit_text(f"✅ Test tugatildi.", reply_markup=None)  # Inline tugmalarni olib tashlaydi
+        await query.message.answer("Bosh menyuga qaytdingiz.", reply_markup=main_menu_buttons())
+    else:
+        await query.answer("❌ Testni tugatishda xatolik yuz berdi.",reply_markup=main_menu_buttons())

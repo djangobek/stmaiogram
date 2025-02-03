@@ -257,22 +257,22 @@ async def send_test_participation_html(query: types.CallbackQuery):
             return dt.strftime("%d.%m.%Y %H:%M:%S")  # Format as 30.01.2025 14:00:59
         except ValueError:
             return "Noma'lum"
-
+    tugri =  test_details["answers"].lower()
     # Extract correct answers safely
     correct_answers_dict = {}
-    if test_details.get("answers"):
+    if tugri:
         correct_answers_dict = {
             str(i + 1): answer  # Convert to question number (1,2,3...)
-            for i, answer in enumerate(test_details["answers"])
+            for i, answer in enumerate(tugri)
         }
 
     print("Extracted correct answers:", correct_answers_dict)  # Debugging
 
     for index, participant in enumerate(sorted_participations, start=1):
         user = participant.get("user", {})
-        fullname = user.get("name") or f"{user.get('first_name', 'Noma\'lum')} {user.get('last_name', '').strip()}"
+        fullname = f"{user.get('first_name', 'Noma\'lum')} {user.get('last_name', '').strip()}"
 
-        user_answers = list(participant.get("answers", ""))  # Convert to list of letters
+        user_answers = list(participant.get("answers", "").lower())  # Convert to list of letters
 
         correct_answers = []
         wrong_answers = []
@@ -310,7 +310,7 @@ async def send_test_participation_html(query: types.CallbackQuery):
             if user_answer == correct_answer:
                 correct_answers.append(f"{question_number}-{correct_answer}")
             else:
-                wrong_answers.append(f"{question_number}-{correct_answer}({user_answer})")
+                wrong_answers.append(f"{question_number}-{user_answer}({correct_answer})")
 
         participant["rank"] = index
         participant["fullname"] = fullname
@@ -320,6 +320,28 @@ async def send_test_participation_html(query: types.CallbackQuery):
         participant["wrong_details"] = ", ".join(wrong_answers)
         participant["test_quality"] = test_quality
         participant["performance"] = f"{performance}%"
+        top_3 = sorted_participations[:3]
+        rank_emojis = ["🥇", "🥈", "🥉"]
+        caption_text = (
+            f"🔊 Test kodi: {test_code}\n"
+            f"📋 Savollar soni: {total_questions} ta\n\n"
+            "📜 Test kalitlari:\n"
+        )
+
+        for i, answer in enumerate(tugri, 1):
+            caption_text += f"{i} - {answer.upper()}\n"  # Ensuring consistent formatting
+
+        caption_text += "\n🏆 **TOP 3 ishtirokchi:**\n"
+
+        for index, participant in enumerate(top_3):
+            user = participant.get("user", {})
+            fullname = f"{user.get('first_name', 'Noma`lum')} {user.get('last_name', '').strip()}"
+            performance = round((int(participant.get("correct_answer", 0)) / total_questions) * 100,
+                                2) if total_questions else 0
+            caption_text += f"{rank_emojis[index]} {fullname} - {performance}%\n"
+
+        caption_text += "\nTestda qatnashgan barchaga tashakkur!"
+
     template_html = """
     <html>
 <head>
@@ -358,7 +380,7 @@ async def send_test_participation_html(query: types.CallbackQuery):
                 <th>Noto'g'ri javoblar soni</th>
                 <th>Test topshirgan vaqti</th>
                 <th class="red-text">Noto'g'ri javoblar</th>
-                <th>Ishlash ko‘rsatkichi (%)</th>
+                <th>Ishlash ko`rsatkichi (%)</th>
             </tr>
             {% for p in participants %}
             <tr>
@@ -392,7 +414,7 @@ async def send_test_participation_html(query: types.CallbackQuery):
 
     await query.message.answer_document(
         document=types.BufferedInputFile(html_file.read(), filename=f"test_{test_code}_report.html"),
-        caption="Test ishtirokchilari haqida ma'lumot.",
+        caption=caption_text,
         reply_markup=main_menu_buttons()
     )
     await query.message.answer("Hisobot tayyor!")
