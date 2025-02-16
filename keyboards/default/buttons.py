@@ -59,6 +59,7 @@ def main_menu_buttons():
     )
     button.row(
         KeyboardButton(text="📂 mening testlarim"),
+        KeyboardButton(text="🏆 Natijalar"),
     )
     button.row(
         KeyboardButton(text="📘 Qo'llanma"),

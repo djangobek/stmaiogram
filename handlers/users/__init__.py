@@ -7,3 +7,4 @@ from . import oddiy_test
 from . import check_answer
 from . import fanli_test
 from . import my_tests
+from . import natijalar

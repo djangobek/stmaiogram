@@ -288,3 +288,19 @@ def update_test_status_api(test_id):
             return {"success": False, "error": response.text}
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+def get_files():
+    """
+    Call the API to get file IDs from the backend.
+    """
+    try:
+        response = requests.get(f'{URL}/files/')
+
+        if response.status_code == 200:
+            data = response.json()
+            return data.get("file_ids", [])  # FIXED LINE
+        else:
+            return []
+    except Exception as e:
+        print(f"Error fetching file IDs: {e}")
+        return []
