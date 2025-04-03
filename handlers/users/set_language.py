@@ -25,3 +25,8 @@ async def change_language(call:types.CallbackQuery,callback_data:LanguageCallbac
     await call.message.delete()
     await asyncio.sleep(5)
     await data.delete()
+
+@dp.message(lambda message: message.video)
+async def get_video_id(message: Message):
+    video_id = message.video.file_id  # Extract the file_id of the video
+    await message.answer(f"📹 Video ID:\n`{video_id}`", parse_mode="Markdown")
