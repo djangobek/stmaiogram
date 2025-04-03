@@ -5,6 +5,8 @@ from aiogram.filters import Command
 from aiogram import types
 from api import get_user,change_user_language
 from keyboards.inline.buttons import LanguageCallback,language_button
+
+
 @dp.message(Command('set_language'))
 async def setlanguage(message:types.Message):
     user = get_user(telegram_id=message.from_user.id)
@@ -27,6 +29,6 @@ async def change_language(call:types.CallbackQuery,callback_data:LanguageCallbac
     await data.delete()
 
 @dp.message(lambda message: message.video)
-async def get_video_id(message: Message):
+async def get_video_id(message: types.Message):  # ✅ Using types.Message
     video_id = message.video.file_id  # Extract the file_id of the video
     await message.answer(f"📹 Video ID:\n`{video_id}`", parse_mode="Markdown")
